@@ -14,7 +14,7 @@ $config = [
     'components' => [
         'request' => [
             // !!! insert a secret key in the following (if it is empty) - this is required by cookie validation
-            'cookieValidationKey' => 'UUQ8z40Tl1Sp8v6qlCpQlTszdcylZeZW',
+            'cookieValidationKey' => 'Uc6MabGv9DQoWdUZeu8Qdynt5zUNVcKv',
         ],
         'cache' => [
             'class' => 'yii\caching\FileCache',
@@ -22,6 +22,7 @@ $config = [
         'user' => [
             'identityClass' => 'app\models\User',
             'enableAutoLogin' => true,
+            'loginUrl'  => ['/auth/login'],
         ],
         'errorHandler' => [
             'errorAction' => 'site/error',
@@ -42,14 +43,22 @@ $config = [
             ],
         ],
         'db' => $db,
-        /*
+
         'urlManager' => [
             'enablePrettyUrl' => true,
             'showScriptName' => false,
             'rules' => [
+                'reports/top-authors/<year:[\w\-]+>' => 'reports/top-authors',
+                'authors/create-author' => 'authors/create-author',
+                'authors/<slug:[\w\-]+>' => 'authors/view',
+                'books/create-book' => 'books/create-book',
+                'books/edit-book/<idBook:[\w\-]+>' => 'books/edit-book',
+                'books/ajax-remove-book' => 'books/ajax-remove-book',
+                'books/<slug:[\w\-]+>' => 'books/view',
+                '<controller:[\w\-]+>/<action:[\w\-]+>' => '<controller>/<action>',
             ],
         ],
-        */
+
     ],
     'params' => $params,
 ];

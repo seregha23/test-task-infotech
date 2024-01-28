@@ -2,52 +2,44 @@
 
 namespace app\models;
 
-class User extends \yii\base\BaseObject implements \yii\web\IdentityInterface
-{
-    public $id;
-    public $username;
-    public $password;
-    public $authKey;
-    public $accessToken;
+use yii\base\NotSupportedException;
+use yii\web\IdentityInterface;
 
-    private static $users = [
-        '100' => [
-            'id' => '100',
-            'username' => 'admin',
-            'password' => 'admin',
-            'authKey' => 'test100key',
-            'accessToken' => '100-token',
-        ],
-        '101' => [
-            'id' => '101',
-            'username' => 'demo',
-            'password' => 'demo',
-            'authKey' => 'test101key',
-            'accessToken' => '101-token',
-        ],
-    ];
+ /**
+ *
+ * @property int $id [int(11)]
+ * @property string $login
+ * @property string $email [varchar(128)]
+ * @property string $username [varchar(64)]
+ * @property string $auth_key [varchar(32)]
+ * @property string $password_hash [varchar(255)]
+ * @property string $created_at [timestamp]
+ * @property string $updated_at [timestamp]
+ * @property int $status_id [smallint(6)]
+ * @property bool $is_deleted [tinyint(1)]
+ *
+ */
+class User extends Base implements IdentityInterface
+{
+
+
+    public static  function tableName(): string {
+        return '{{%users}}';
+    }
 
 
     /**
      * {@inheritdoc}
      */
-    public static function findIdentity($id)
-    {
-        return isset(self::$users[$id]) ? new static(self::$users[$id]) : null;
+    public static function findIdentity($id): ?User {
+        return static::findOne($id);
     }
 
     /**
      * {@inheritdoc}
      */
-    public static function findIdentityByAccessToken($token, $type = null)
-    {
-        foreach (self::$users as $user) {
-            if ($user['accessToken'] === $token) {
-                return new static($user);
-            }
-        }
-
-        return null;
+    public static function findIdentityByAccessToken($token, $type = null): ?IdentityInterface {
+        throw new NotSupportedException('"findIdentityByAccessToken" is not implemented.');
     }
 
     /**
@@ -58,13 +50,7 @@ class User extends \yii\base\BaseObject implements \yii\web\IdentityInterface
      */
     public static function findByUsername($username)
     {
-        foreach (self::$users as $user) {
-            if (strcasecmp($user['username'], $username) === 0) {
-                return new static($user);
-            }
-        }
-
-        return null;
+        return static::findOne(['username' => $username, 'status_id' => self::STATUS_PUBLISHED]);
     }
 
     /**
@@ -78,17 +64,17 @@ class User extends \yii\base\BaseObject implements \yii\web\IdentityInterface
     /**
      * {@inheritdoc}
      */
-    public function getAuthKey()
+    public function getAuthKey(): ?string
     {
-        return $this->authKey;
+        return $this->auth_key;
     }
 
     /**
      * {@inheritdoc}
      */
-    public function validateAuthKey($authKey)
+    public function validateAuthKey($authKey): ?bool
     {
-        return $this->authKey === $authKey;
+        return $this->auth_key === $authKey;
     }
 
     /**
@@ -97,8 +83,30 @@ class User extends \yii\base\BaseObject implements \yii\web\IdentityInterface
      * @param string $password password to validate
      * @return bool if password provided is valid for current user
      */
-    public function validatePassword($password)
+    public function validatePassword(string $password): bool
     {
-        return $this->password === $password;
+        if (!$this->password_hash) {
+            return false;
+        }
+        return app()->security->validatePassword($password, $this->password_hash);
+    }
+
+    public function generateAuthKey(): void
+    {
+        $this->auth_key = app()->security->generateRandomString();
+    }
+
+    public function setPassword(string $password): void
+    {
+        if (strlen($password)) {
+            $this->password_hash = app()->security->generatePasswordHash($password);
+        }
+    }
+
+
+    public function rules(): array {
+        return [
+            [['login', 'email', 'username'], 'safe'],
+        ];
     }
 }
